@@ -1,4 +1,4 @@
-﻿<krpano>
+<krpano>
 
 	<!-- krpano 1.23.3 - Virtual Tour Skin -->
 
@@ -356,42 +356,42 @@
 		
 		loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
 	</action>
-	
-	<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
+		
+		<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
 	<style name="skin_info_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl" vcenter="true"
 	       html="info"
-	       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:60px; color:#242625; text-align:center;"
-	       css_hover="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:60px; color:#699477; text-align:center;"
-	       css="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:60px; color:#242625; text-align:center;"
-	       width="80" height="80"
+	       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+	       css_hover="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#699477; text-align:center;"
+	       css="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+	       width="140" height="140"
 	       bgcolor="get:brand_colors.white_alt" bgalpha="1.0"
-	       bgroundedge="40"
+	       bgroundedge="80"
 	       bgborder="0"
 	       bgshadow="0 4 10 0x000000 0.4"
 	       tooltip=""
 	       info_title="Information"
 	       info_text="Your body copy goes here."
-	       onclick="skin_show_info(get(name));"
+	       onclick="tween(scale, 0.45, 0.1, default, tween(scale, 0.5, 0.2)); skin_show_info(get(name));"
 	       depth="1000"
 	       scale="0.5"
-	       onover.addevent="tween(scale,0.6,0.15); copy(css, css_hover); tween(bgroundedge,20,0.15);"
-	       onout.addevent="tween(scale,0.5,0.15); copy(css, css_normal); tween(bgroundedge,40,0.15);"
+	       onover.addevent="tween(scale,0.55,0.15); copy(css, css_hover);"
+	       onout.addevent="tween(scale,0.5,0.15); copy(css, css_normal);"
 	       onloaded.addevent="skin_info_hotspotstyle_setup();"
 	       />
-
+	
 	<action name="skin_info_hotspotstyle_setup" scope="local">
 		if(skin_settings.tooltips_hotspots,
 			copy(caller.tooltip, caller.info_title);
 			caller.loadstyle(skin_tooltips);
 		);
 	</action>
-
+	
 	<action name="skin_scene3dtransition" scope="local" args="scenename, hlookatoffset">
 		motionblur = 0.5;
 		transitiondelay = 0.0;
 		transitiontime = 0.5;
 		transitiontweentype = "easeoutquad";
-
+		
 		if(caller AND caller.ishotspot,
 			<!-- called from a hotspot, move toward the hotspot -->
 			if(caller.depth == 0,
@@ -409,7 +409,7 @@
 				set3dtransition("image", 0,0,0, motionblur, hlookatoffset, transitiondelay, transitiontime, transitiontweentype);
 			);
 		);
-
+		
 		loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
 	</action>
 
