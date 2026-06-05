@@ -282,29 +282,29 @@
 	/>
 
 	<!-- skin_hotspotstyle - style for the hotspots -->
-<style name="skin_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl"
-       html="visibility"
-       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
-       css_hover="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#699477; text-align:center;"
-       css="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
-       vcenter="true"
-       width="140" height="140"
-       bgcolor="get:brand_colors.white_alt" bgalpha="1.0"
-       bgroundedge="80"
-       bgborder="0"
-       bgshadow="0 4 10 0x000000 0.4"
-       tooltip=""
-       linkedscene=""
-       linkedscene_lookat=""
-       linkedscene_hoffset="0"
-       use3dtransition="false"
-       onclick="skin_hotspotstyle_click();"
-       depth="1000"
-       scale="0.5"
-       onover.addevent="tween(scale,0.55,0.15); copy(css, css_hover);"
-       onout.addevent="tween(scale,0.5,0.15); copy(css, css_normal);"
-       onloaded.addevent="skin_hotspotstyle_setup();"
-       />
+	<style name="skin_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl"
+	       html="visibility"
+	       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+	       css_hover="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#699477; text-align:center;"
+	       css="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+	       vcenter="true"
+	       width="140" height="140"
+	       bgcolor="get:brand_colors.white_alt" bgalpha="1.0"
+	       bgroundedge="80"
+	       bgborder="0"
+	       bgshadow="0 4 10 0x000000 0.4"
+	       tooltip=""
+	       linkedscene=""
+	       linkedscene_lookat=""
+	       linkedscene_hoffset="0"
+	       use3dtransition="false"
+	       onclick="skin_hotspotstyle_click();"
+	       depth="1000"
+	       scale="0.5"
+	       onover.addevent="tween(scale,0.55,0.15); copy(css, css_hover);"
+	       onout.addevent="tween(scale,0.5,0.15); copy(css, css_normal);"
+	       onloaded.addevent="skin_hotspotstyle_setup();"
+	       />
 
 	<action name="skin_hotspotstyle_setup" scope="local">
 		if(isvalue(caller.linkedscene) AND skin_settings.tooltips_hotspots,
@@ -354,18 +354,18 @@
 		);
 		
 		if(webvr.isenabled,
-			set(hotspot[vr_fade_black].visible, true);
-			set(hotspot[vr_fade_black].enabled, true);
-			stoptween(hotspot[vr_fade_black].alpha);
+			skin_vr_fade_set(visible, true);
+			skin_vr_fade_set(enabled, true);
+			skin_vr_fade_stoptween();
 			
-			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+			skin_vr_fade_tween(1.0, 1.0, easeOutSine,
 				<!-- Bind the fade-in strictly to the new scene completing its load to avoid frozen frames -->
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete, 
-					stoptween(hotspot[vr_fade_black].alpha);
-					tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
-						set(hotspot[vr_fade_black].visible, false);
-						set(hotspot[vr_fade_black].enabled, false);
+					skin_vr_fade_stoptween();
+					skin_vr_fade_tween(0.0, 1.0, easeOutSine, 
+						skin_vr_fade_set(visible, false);
+						skin_vr_fade_set(enabled, false);
 					);
 					delete(events[vr_fade_event]);
 				);
@@ -377,7 +377,7 @@
 		);
 	</action>
 		
-		<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
+	<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
 	<style name="skin_info_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl" vcenter="true"
 	       html="info"
 	       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
@@ -523,13 +523,48 @@
 	         onclick="skin_hide_info();"
 	         />
 
-	<!-- VR Fade to Black Hotspot (For VR Scene Transitions) -->
-	<!-- Added renderer="webgl", increased scale/depth slightly to prevent stereoscopic clipping and tracking bugs -->
-	<hotspot name="vr_fade_black" keep="true" type="text" distorted="true" renderer="webgl"
-	         torigin="view" ath="0" atv="0" depth="100" scale="20"
-	         width="5000" height="5000"
-	         bgcolor="0x000000" bgalpha="1.0" bgborder="0"
-	         visible="false" alpha="0.0" enabled="false" handcursor="false" zorder="99999" />
+	<!-- VR Fade to Black Cube Hotspots (For VR Scene Transitions) -->
+	<!-- Fixed to create a complete 360-degree cube to prevent seeing edges when whipping around in VR -->
+	<style name="vr_fade_cube_face" keep="true" type="text" distorted="true" renderer="webgl"
+	       torigin="view" depth="500" scale="1" width="1050" height="1050"
+	       bgcolor="0x000000" bgalpha="1.0" bgborder="0"
+	       visible="false" alpha="0.0" enabled="false" handcursor="false" zorder="99999" />
+
+	<hotspot name="vr_fade_black_front"  style="vr_fade_cube_face" ath="0"   atv="0"   />
+	<hotspot name="vr_fade_black_back"   style="vr_fade_cube_face" ath="180" atv="0"   />
+	<hotspot name="vr_fade_black_left"   style="vr_fade_cube_face" ath="-90" atv="0"   />
+	<hotspot name="vr_fade_black_right"  style="vr_fade_cube_face" ath="90"  atv="0"   />
+	<hotspot name="vr_fade_black_top"    style="vr_fade_cube_face" ath="0"   atv="-90" />
+	<hotspot name="vr_fade_black_bottom" style="vr_fade_cube_face" ath="0"   atv="90"  />
+
+	<!-- Helper Actions for the 360 VR Fade -->
+	<action name="skin_vr_fade_set">
+		set(hotspot[vr_fade_black_front].%1, %2);
+		set(hotspot[vr_fade_black_back].%1, %2);
+		set(hotspot[vr_fade_black_left].%1, %2);
+		set(hotspot[vr_fade_black_right].%1, %2);
+		set(hotspot[vr_fade_black_top].%1, %2);
+		set(hotspot[vr_fade_black_bottom].%1, %2);
+	</action>
+
+	<action name="skin_vr_fade_stoptween">
+		stoptween(hotspot[vr_fade_black_front].alpha);
+		stoptween(hotspot[vr_fade_black_back].alpha);
+		stoptween(hotspot[vr_fade_black_left].alpha);
+		stoptween(hotspot[vr_fade_black_right].alpha);
+		stoptween(hotspot[vr_fade_black_top].alpha);
+		stoptween(hotspot[vr_fade_black_bottom].alpha);
+	</action>
+
+	<action name="skin_vr_fade_tween">
+		tween(hotspot[vr_fade_black_back].alpha, %1, %2, %3);
+		tween(hotspot[vr_fade_black_left].alpha, %1, %2, %3);
+		tween(hotspot[vr_fade_black_right].alpha, %1, %2, %3);
+		tween(hotspot[vr_fade_black_top].alpha, %1, %2, %3);
+		tween(hotspot[vr_fade_black_bottom].alpha, %1, %2, %3);
+		<!-- The front face handles the single donecall logic (%4) -->
+		tween(hotspot[vr_fade_black_front].alpha, %1, %2, %3, %4);
+	</action>
 
 	<!-- Action to show the Dialog Box -->
 	<action name="skin_show_info" scope="local" args="hs_name">
@@ -573,9 +608,9 @@
 		
 		<!-- Safety fallback: if they exit VR during a transition, forcibly clear the fade-to-black -->
 		if(!webvr.isenabled,
-			stoptween(hotspot[vr_fade_black].alpha);
-			set(hotspot[vr_fade_black].visible, false);
-			set(hotspot[vr_fade_black].enabled, false);
+			skin_vr_fade_stoptween();
+			skin_vr_fade_set(visible, false);
+			skin_vr_fade_set(enabled, false);
 		);
 	</action>
 
@@ -1111,18 +1146,18 @@
 		);
 		
 		if(webvr.isenabled,
-			set(hotspot[vr_fade_black].visible, true);
-			set(hotspot[vr_fade_black].enabled, true);
-			stoptween(hotspot[vr_fade_black].alpha);
+			skin_vr_fade_set(visible, true);
+			skin_vr_fade_set(enabled, true);
+			skin_vr_fade_stoptween();
 			
-			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+			skin_vr_fade_tween(1.0, 1.0, easeOutSine,
 				<!-- Instead of a fixed delay, strict bind the fade-in to the new scene fully completing its load -->
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete, 
-					stoptween(hotspot[vr_fade_black].alpha);
-					tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
-						set(hotspot[vr_fade_black].visible, false);
-						set(hotspot[vr_fade_black].enabled, false);
+					skin_vr_fade_stoptween();
+					skin_vr_fade_tween(0.0, 1.0, easeOutSine, 
+						skin_vr_fade_set(visible, false);
+						skin_vr_fade_set(enabled, false);
 					);
 					delete(events[vr_fade_event]);
 				);
