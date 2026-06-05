@@ -353,7 +353,19 @@
 			);
 		);
 		
-		loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
+		if(webvr.isenabled,
+			set(hotspot[vr_fade_black].visible, true);
+			set(hotspot[vr_fade_black].enabled, true);
+			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+				loadscene(get(scenename), null, MERGE, NOBLEND);
+				delayedcall(0.2, tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
+					set(hotspot[vr_fade_black].visible, false);
+					set(hotspot[vr_fade_black].enabled, false);
+				));
+			);
+		  ,
+			loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
+		);
 	</action>
 		
 		<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
