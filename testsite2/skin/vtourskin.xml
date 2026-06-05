@@ -356,12 +356,21 @@
 		if(webvr.isenabled,
 			set(hotspot[vr_fade_black].visible, true);
 			set(hotspot[vr_fade_black].enabled, true);
+			stoptween(hotspot[vr_fade_black].alpha);
+			
 			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+				<!-- Bind the fade-in strictly to the new scene completing its load to avoid frozen frames -->
+				set(events[vr_fade_event].keep, true);
+				set(events[vr_fade_event].onloadcomplete, 
+					stoptween(hotspot[vr_fade_black].alpha);
+					tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
+						set(hotspot[vr_fade_black].visible, false);
+						set(hotspot[vr_fade_black].enabled, false);
+					);
+					delete(events[vr_fade_event]);
+				);
+				
 				loadscene(get(scenename), null, MERGE, NOBLEND);
-				delayedcall(0.2, tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
-					set(hotspot[vr_fade_black].visible, false);
-					set(hotspot[vr_fade_black].enabled, false);
-				));
 			);
 		  ,
 			loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
@@ -515,8 +524,9 @@
 	         />
 
 	<!-- VR Fade to Black Hotspot (For VR Scene Transitions) -->
-	<hotspot name="vr_fade_black" keep="true" type="text" distorted="true"
-	         torigin="view" ath="0" atv="0" depth="50" scale="10"
+	<!-- Added renderer="webgl", increased scale/depth slightly to prevent stereoscopic clipping and tracking bugs -->
+	<hotspot name="vr_fade_black" keep="true" type="text" distorted="true" renderer="webgl"
+	         torigin="view" ath="0" atv="0" depth="100" scale="20"
 	         width="5000" height="5000"
 	         bgcolor="0x000000" bgalpha="1.0" bgborder="0"
 	         visible="false" alpha="0.0" enabled="false" handcursor="false" zorder="99999" />
@@ -560,6 +570,13 @@
 		<!-- Fade out both the overlay and VR hotspot -->
 		tween(layer[skin_info_overlay].alpha, 0.0, 0.25, default, set(layer[skin_info_overlay].visible, false));
 		tween(hotspot[skin_info_box_vr].alpha, 0.0, 0.25, default, set(hotspot[skin_info_box_vr].visible, false));
+		
+		<!-- Safety fallback: if they exit VR during a transition, forcibly clear the fade-to-black -->
+		if(!webvr.isenabled,
+			stoptween(hotspot[vr_fade_black].alpha);
+			set(hotspot[vr_fade_black].visible, false);
+			set(hotspot[vr_fade_black].enabled, false);
+		);
 	</action>
 
 	<!-- previous/next scene buttons for the hidden skin mode -->
@@ -1096,13 +1113,22 @@
 		if(webvr.isenabled,
 			set(hotspot[vr_fade_black].visible, true);
 			set(hotspot[vr_fade_black].enabled, true);
+			stoptween(hotspot[vr_fade_black].alpha);
+			
 			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+				<!-- Instead of a fixed delay, strict bind the fade-in to the new scene fully completing its load -->
+				set(events[vr_fade_event].keep, true);
+				set(events[vr_fade_event].onloadcomplete, 
+					stoptween(hotspot[vr_fade_black].alpha);
+					tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
+						set(hotspot[vr_fade_black].visible, false);
+						set(hotspot[vr_fade_black].enabled, false);
+					);
+					delete(events[vr_fade_event]);
+				);
+				
 				loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), NOBLEND);
 				if(lh !== null, skin_lookat(get(lh), get(lv), get(lfov)); );
-				delayedcall(0.2, tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
-					set(hotspot[vr_fade_black].visible, false);
-					set(hotspot[vr_fade_black].enabled, false);
-				));
 			);
 		  ,
 			loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), get(blendmode));
