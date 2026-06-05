@@ -324,8 +324,7 @@
 				if(caller.linkedscene_lookat, txtsplit(caller.linkedscene_lookat, ',', hs_lookat_h, hs_lookat_v, hs_lookat_fov); );
 				
 				tween(caller.scale, 0.45, 0.1);
-				skin_loadscene(get(hs_linkedscene), get(skin_settings.loadscene_blend));
-				if(hs_lookat_h !== null, skin_lookat(get(hs_lookat_h), get(hs_lookat_v), get(hs_lookat_fov)); );
+				skin_loadscene(get(hs_linkedscene), get(skin_settings.loadscene_blend), get(hs_lookat_h), get(hs_lookat_v), get(hs_lookat_fov));
 			);
 		);
 	</action>
@@ -502,6 +501,13 @@
 	         visible="false" alpha="0.0"
 	         onclick="skin_hide_info();"
 	         />
+
+	<!-- VR Fade to Black Hotspot (For VR Scene Transitions) -->
+	<hotspot name="vr_fade_black" keep="true" type="text" distorted="true"
+	         torigin="view" ath="0" atv="0" depth="50" scale="10"
+	         width="5000" height="5000"
+	         bgcolor="0x000000" bgalpha="1.0" bgborder="0"
+	         visible="false" alpha="0.0" enabled="false" handcursor="false" zorder="99999" />
 
 	<!-- Action to show the Dialog Box -->
 	<action name="skin_show_info" scope="local" args="hs_name">
@@ -1056,7 +1062,7 @@
 	</action>
 
 
-	<action name="skin_loadscene" scope="local" args="newscenenameorindex, blendmode">
+	<action name="skin_loadscene" scope="local" args="newscenenameorindex, blendmode, lh, lv, lfov">
 		if(webvr.isenabled AND scene.count GT 1,
 			set(hotspot[skin_webvr_prev_scene].visible, false);
 			set(hotspot[skin_webvr_next_scene].visible, false);
@@ -1075,7 +1081,21 @@
 			blendmode = skin_settings.loadscene_blend;
 		);
 		
-		loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), get(blendmode));
+		if(webvr.isenabled,
+			set(hotspot[vr_fade_black].visible, true);
+			set(hotspot[vr_fade_black].enabled, true);
+			tween(hotspot[vr_fade_black].alpha, 1.0, 1.0, easeOutSine,
+				loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), NOBLEND);
+				if(lh !== null, skin_lookat(get(lh), get(lv), get(lfov)); );
+				delayedcall(0.2, tween(hotspot[vr_fade_black].alpha, 0.0, 1.0, easeOutSine, 
+					set(hotspot[vr_fade_black].visible, false);
+					set(hotspot[vr_fade_black].enabled, false);
+				));
+			);
+		  ,
+			loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), get(blendmode));
+			if(lh !== null, skin_lookat(get(lh), get(lv), get(lfov)); );
+		);
 	</action>
 
 	
