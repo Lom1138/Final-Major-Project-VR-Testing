@@ -520,22 +520,48 @@
 	</layer>
 
 	<!-- Action to show the Dialog Box -->
-	<action name="skin_show_info" scope="local" args="hs_name">
-		<!-- Safely retrieve the title and text from the clicked hotspot -->
-		copy(infotitle, hotspot[get(hs_name)].info_title);
-		copy(infobody, hotspot[get(hs_name)].info_text);
-
-		<!-- Inject the title and text securely into the HTML of the box, avoiding escaped quotes -->
-		calc(layer[skin_info_box].html, '[div style="margin-bottom:15px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:32px; font-weight:900; color:#242625;"]' + infotitle + '[/div][div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; line-height:1.6; color:#242625;"]' + infobody + '[/div]');
-
+<action name="skin_show_info" scope="local" args="hs_name">
+	<!-- Safely retrieve the title and text from the clicked hotspot -->
+	copy(infotitle, hotspot[get(hs_name)].info_title);
+	copy(infobody, hotspot[get(hs_name)].info_text);
+	
+	if(webvr.isenabled,
+		<!-- VR MODE: Create a 3D WebGL hotspot right in front of the camera -->
+		if(hotspot[skin_vr_info], removehotspot(skin_vr_info); );
+		addhotspot('skin_vr_info', hvr);
+		set(hvr,
+			type='text',
+			renderer='webgl',
+			ath=get(view.hlookat),
+			atv=get(view.vlookat),
+			depth=400,
+			width=400,
+			autoheight=true,
+			bgcolor=0xeff1ed,
+			bgalpha=1.0,
+			bgroundedge=12,
+			padding=30,
+			distorted=true,
+			vr_timeout=750,
+			alpha=0.0,
+			css='text-align:center; cursor:pointer;',
+			onclick='tween(alpha,0,0.25,default,removehotspot(skin_vr_info));'
+		);
+		calc(hvr.html, '[div style="margin-bottom:15px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:24px; font-weight:700; color:#699477;"]' + infotitle + '[/div][div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; line-height:1.6; color:#242625;"]' + infobody + '[/div][div style="margin-top:20px; font-family:Material Icons; font-size:32px; color:#242625;"]close[/div]');
+		tween(hvr.alpha, 1.0, 0.25);
+	  ,
+		<!-- NORMAL MODE: Inject the title and text securely into the HTML of the box -->
+		calc(layer[skin_info_box].html, '[div style="margin-bottom:15px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:28px; font-weight:700; color:#699477;"]' + infotitle + '[/div][div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; line-height:1.6; color:#242625;"]' + infobody + '[/div]');
+		
 		<!-- Show the overlay and animate it fading in -->
 		set(layer[skin_info_overlay].visible, true);
 		tween(layer[skin_info_overlay].alpha, 1.0, 0.25);
-
-		<!-- Add a smooth 'pop' effect to the dialog box itself -->
+		
+		<!-- Add a smooth pop effect to the dialog box itself -->
 		set(layer[skin_info_box].scale, 0.9);
 		tween(layer[skin_info_box].scale, 1.0, 0.25, easeoutback);
-	</action>
+	);
+</action>
 
 	<!-- Action to hide the Dialog Box -->
 	<action name="skin_hide_info">
