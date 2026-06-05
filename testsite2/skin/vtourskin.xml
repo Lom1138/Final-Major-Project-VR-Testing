@@ -268,20 +268,20 @@
 	       onup.addevent="delayedcall(0, if(hovering AND enabled, skin_buttonglow(get(name),0.3); , skin_buttonglow(null);delete(skin_lockglow); ); );"
 	       />
 
-	<!-- skin_thumbtext_style - style/textfield for the (optional, skin_settings.thumbs_text) thumbnails texts -->
-	<style name="skin_thumbtext_style" type="text" align="bottom" width="100%" y="5" enabled="false" bg="false" bgborder="false" css="calc:skin_settings.design_text_css + ' text-align:center; font-size:10px;'" txtshadow="get:skin_settings.design_text_txtshadow" />
+<!-- skin_thumbtext_style - style/textfield for the (optional, skin_settings.thumbs_text) thumbnails texts -->
+<style name="skin_thumbtext_style" type="text" align="bottom" width="100%" y="5" enabled="false" bg="false" bgborder="false" css="calc:skin_settings.design_text_css + ' text-align:center; font-size:10px;'" txtshadow="get:skin_settings.design_text_txtshadow" />
 
-	<!-- Brand Colours (Declared for use as variables) -->
-	<brand_colors 
-		primary="0x699477"
-		white_alt="0xeff1ed"
-		black_alt="0x242625"
-		accent_red="0x8c2a26"
-		accent_brass="0xd9b362"
-		bg_alt="0xa39f94"
-	/>
+<!-- Brand Colours (Declared for use as variables) -->
+<brand_colors 
+	primary="0x699477"
+	white_alt="0xeff1ed"
+	black_alt="0x242625"
+	accent_red="0x8c2a26"
+	accent_brass="0xd9b362"
+	bg_alt="0xa39f94"
+/>
 
-	<!-- skin_hotspotstyle - style for the hotspots -->
+<!-- skin_hotspotstyle - style for the hotspots -->
 <style name="skin_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl"
        html="visibility"
        css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
@@ -298,7 +298,7 @@
        linkedscene_lookat=""
        linkedscene_hoffset="0"
        use3dtransition="false"
-       onclick="skin_hotspotstyle_click();"
+       onclick="skin_hotspotstyle_click(); tween(scale,0.45,0.1);"
        depth="1000"
        scale="0.5"
        onover.addevent="tween(scale,0.55,0.15); copy(css, css_hover);"
@@ -306,29 +306,130 @@
        onloaded.addevent="skin_hotspotstyle_setup();"
        />
 
-	<action name="skin_hotspotstyle_setup" scope="local">
-		if(isvalue(caller.linkedscene) AND skin_settings.tooltips_hotspots,
-			copy(caller.tooltip, scene[get(caller.linkedscene)].title);
-			caller.loadstyle(skin_tooltips);
-		);
-	</action>
+<action name="skin_hotspotstyle_setup" scope="local">
+	if(isvalue(caller.linkedscene) AND skin_settings.tooltips_hotspots,
+		copy(caller.tooltip, scene[get(caller.linkedscene)].title);
+		caller.loadstyle(skin_tooltips);
+	);
+</action>
 
-	<action name="skin_hotspotstyle_click" scope="local">
-		if(isvalue(caller.linkedscene),
-			copy(hs_linkedscene, caller.linkedscene);
-			set(caller.enabled, false);
-			skin_hidetooltips();
-			if(caller.use3dtransition,
-				skin_scene3dtransition(get(hs_linkedscene),get(caller.linkedscene_hoffset));
-			  ,
-				if(caller.linkedscene_lookat, txtsplit(caller.linkedscene_lookat, ',', hs_lookat_h, hs_lookat_v, hs_lookat_fov); );
-				
-				tween(caller.scale, 0.45, 0.1);
-				skin_loadscene(get(hs_linkedscene), get(skin_settings.loadscene_blend));
-				if(hs_lookat_h !== null, skin_lookat(get(hs_lookat_h), get(hs_lookat_v), get(hs_lookat_fov)); );
+<action name="skin_hotspotstyle_click" scope="local">
+	if(isvalue(caller.linkedscene),
+		copy(hs_linkedscene, caller.linkedscene);
+		set(caller.enabled, false);
+		skin_hidetooltips();
+		if(caller.use3dtransition,
+			skin_scene3dtransition(get(hs_linkedscene),get(caller.linkedscene_hoffset));
+		  ,
+			if(caller.linkedscene_lookat, txtsplit(caller.linkedscene_lookat, ',', hs_lookat_h, hs_lookat_v, hs_lookat_fov); );
+			
+			skin_loadscene(get(hs_linkedscene), get(skin_settings.loadscene_blend));
+			if(hs_lookat_h !== null, skin_lookat(get(hs_lookat_h), get(hs_lookat_v), get(hs_lookat_fov)); );
+		);
+	);
+</action>
+
+<!-- skin_info_hotspotstyle - style for INFORMATIONAL hotspots -->
+<style name="skin_info_hotspotstyle" type="text" edge="center" distorted="true" renderer="webgl" vcenter="true"
+       html="info"
+       css_normal="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+       css_hover="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#699477; text-align:center;"
+       css="font-family:'Material Icons', Arial, Helvetica, sans-serif; font-size:80px; color:#242625; text-align:center;"
+       width="140" height="140"
+       bgcolor="get:brand_colors.white_alt" bgalpha="1.0"
+       bgroundedge="80"
+       bgborder="0"
+       bgshadow="0 4 10 0x000000 0.4"
+       tooltip=""
+       info_title="Information"
+       info_text="Your body copy goes here."
+       onclick="skin_show_info(get(name)); tween(scale,0.45,0.1);"
+       depth="1000"
+       scale="0.5"
+       onover.addevent="tween(scale,0.55,0.15); copy(css, css_hover);"
+       onout.addevent="tween(scale,0.5,0.15); copy(css, css_normal);"
+       onloaded.addevent="skin_info_hotspotstyle_setup();"
+       />
+
+<action name="skin_info_hotspotstyle_setup" scope="local">
+	if(skin_settings.tooltips_hotspots,
+		copy(caller.tooltip, caller.info_title);
+		caller.loadstyle(skin_tooltips);
+	);
+</action>
+
+<!-- HTML Overlay Layers for Normal Mode -->
+<layer name="skin_info_overlay" type="container" align="center" width="100%" height="100%" zorder="99" bgcolor="0x242625" bgalpha="0.8" bgcapture="true" visible="false" alpha="0.0" onclick="skin_hide_info();" />
+
+<layer name="skin_info_box" type="container" parent="skin_info_overlay" align="center" width="90%" maxwidth="600" padding="30" bgcolor="0xeff1ed" bgalpha="1.0" bgroundedge="12" bgshadow="0 10 30 0x000000 0.5" bgcapture="true" maskchildren="false" onloaded="calc(height, 'auto');">
+	<layer name="skin_info_close" type="text" align="righttop" x="-15" y="-15" html="close" css="font-family:'Material Icons'; font-size:30px; color:#242625; cursor:pointer;" bg="false" onclick="skin_hide_info();" onover="tween(alpha,0.6,0.15);" onout="tween(alpha,1.0,0.15);" />
+</layer>
+
+<!-- Actions to show/hide the Info Dialog -->
+<action name="skin_show_info" scope="local" args="hs_name">
+	copy(infotitle, hotspot[get(hs_name)].info_title);
+	copy(infobody, hotspot[get(hs_name)].info_text);
+	
+	if(webvr.isenabled,
+		<!-- Hide all other hotspots and save their visibility state -->
+		for(set(i,0), i LT hotspot.count, inc(i),
+			if(hotspot[get(i)].name != 'skin_vr_info',
+				copy(hotspot[get(i)].vr_saved_visible, hotspot[get(i)].visible);
+				set(hotspot[get(i)].visible, false);
 			);
 		);
-	</action>
+
+		<!-- VR MODE: Create a 3D WebGL hotspot right in front of the camera -->
+		if(hotspot[skin_vr_info], removehotspot(skin_vr_info); );
+		addhotspot('skin_vr_info', hvr);
+		set(hvr,
+			type='text',
+			renderer='webgl',
+			ath=get(view.hlookat),
+			atv=get(view.vlookat),
+			depth=800,
+			scale=0.5,
+			width=600,
+			autoheight=true,
+			bgcolor=0xeff1ed,
+			bgalpha=1.0,
+			bgroundedge=12,
+			padding=30,
+			distorted=true,
+			vr_timeout=750,
+			alpha=0.0,
+			css='text-align:center; cursor:pointer;',
+			onclick='skin_close_vr_info();'
+		);
+		calc(hvr.html, '[div style="margin-bottom:15px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:24px; font-weight:700; color:#699477;"]' + infotitle + '[/div][div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; line-height:1.6; color:#242625;"]' + infobody + '[/div][div style="margin-top:20px; font-family:Material Icons; font-size:32px; color:#242625;"]close[/div]');
+		tween(hvr.alpha, 1.0, 0.25);
+	  ,
+		<!-- NORMAL MODE: Inject the title and text securely into the HTML of the box -->
+		calc(layer[skin_info_box].html, '[div style="margin-bottom:15px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:28px; font-weight:700; color:#699477;"]' + infotitle + '[/div][div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; line-height:1.6; color:#242625;"]' + infobody + '[/div]');
+		
+		set(layer[skin_info_overlay].visible, true);
+		tween(layer[skin_info_overlay].alpha, 1.0, 0.25);
+		set(layer[skin_info_box].scale, 0.9);
+		tween(layer[skin_info_box].scale, 1.0, 0.25, easeoutback);
+	);
+</action>
+
+<action name="skin_close_vr_info">
+	tween(hotspot[skin_vr_info].alpha, 0.0, 0.25, default, 
+		removehotspot(skin_vr_info);
+		<!-- Restore all other hotspots to their original visibility -->
+		for(set(i,0), i LT hotspot.count, inc(i),
+			if(hotspot[get(i)].vr_saved_visible === true,
+				set(hotspot[get(i)].visible, true);
+				delete(hotspot[get(i)].vr_saved_visible);
+			);
+		);
+	);
+</action>
+
+<action name="skin_hide_info">
+	tween(layer[skin_info_overlay].alpha, 0.0, 0.25, default, set(layer[skin_info_overlay].visible, false));
+</action>
 	
 	<action name="skin_scene3dtransition" scope="local" args="scenename, hlookatoffset">
 		motionblur = 0.5;
