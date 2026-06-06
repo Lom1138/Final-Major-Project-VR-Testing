@@ -64,8 +64,7 @@
 	<vtourskinxmlpath url="./" />
 
 	<!-- iPhone X safe-area support: use the horizontal safe-area only -->
-	<!-- bgcolor set here so tweening display.bgalpha produces a full-sphere black fade in VR -->
-	<display safearea="h-only" bgcolor="0x000000" bgalpha="0.0" />
+	<display safearea="h-only" />
 
 	<!-- mouse / touch / keyboard(button) control settings - https://krpano.com/docu/xml/#control -->
 	<control mouse="drag"
@@ -355,15 +354,16 @@
 		);
 		
 		if(webvr.isenabled,
-			<!-- Fade using display.bgalpha - fills the entire WebGL framebuffer (both eyes, full 360°) -->
+			<!-- Gaze-locked fade: torigin=view means the black plane follows wherever the user looks -->
 			copy(global.vr_pending_scene, scenename);
-			stoptween(display.bgalpha);
-			tween(display.bgalpha, 1.0, 0.5, easeInSine);
+			set(hotspot[vr_fade_black].visible, true);
+			stoptween(hotspot[vr_fade_black].alpha);
+			tween(hotspot[vr_fade_black].alpha, 1.0, 0.5, easeInSine);
 			delayedcall(vr_scene_load, 0.55,
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete,
-					stoptween(display.bgalpha);
-					tween(display.bgalpha, 0.0, 0.8, easeOutSine);
+					stoptween(hotspot[vr_fade_black].alpha);
+					tween(hotspot[vr_fade_black].alpha, 0.0, 0.8, easeOutSine);
 					delete(events[vr_fade_event]);
 				);
 				loadscene(get(global.vr_pending_scene), null, MERGE, NOBLEND);
@@ -539,8 +539,16 @@
          onclick="skin_hide_info();"
          />
 
-	<!-- VR Fade to Black: tweens display.bgalpha on the display element above.                      -->
-	<!-- This fills the entire WebGL framebuffer (both eyes, full 360°) rather than a flat plane.   -->
+	<!-- VR Fade to Black hotspot.                                                              -->
+	<!-- torigin="view" locks it to wherever the user is looking every frame, so it always    -->
+	<!-- covers their view even if they spin around mid-transition.                            -->
+	<!-- depth="50" + scale="5": at that distance the plane subtends ~180° in each direction, -->
+	<!-- fully covering the binocular FOV. zorder="99999" keeps it above all other content.   -->
+	<hotspot name="vr_fade_black" keep="true" type="text" distorted="true" renderer="webgl"
+	         torigin="view" ath="0" atv="0" depth="50" scale="5"
+	         width="2000" height="2000"
+	         bgcolor="0x000000" bgalpha="1.0" bgborder="0"
+	         visible="false" alpha="0.0" enabled="false" handcursor="false" zorder="99999" />
 
 	<!-- Action to show the Dialog Box -->
 	<action name="skin_show_info" scope="local" args="hs_name">
@@ -595,10 +603,10 @@
 		tween(hotspot[skin_info_box_vr].alpha, 0.0, 0.25, default, set(hotspot[skin_info_box_vr].visible, false));
 		tween(hotspot[skin_info_close_vr].alpha, 0.0, 0.2, default, set(hotspot[skin_info_close_vr].visible, false));
 
-		<!-- Safety fallback: if they exit VR during a transition, clear the display fade -->
+		<!-- Safety fallback: clear the fade hotspot if VR is exited during a transition -->
 		if(!webvr.isenabled,
-			stoptween(display.bgalpha);
-			tween(display.bgalpha, 0.0, 0.3);
+			stoptween(hotspot[vr_fade_black].alpha);
+			set(hotspot[vr_fade_black].visible, false);
 		);
 	</action>
 
@@ -1134,21 +1142,20 @@
 		);
 		
 		if(webvr.isenabled,
-			<!-- Fade using display.bgalpha - fills the entire WebGL framebuffer (both eyes, full 360°) -->
-			<!-- Store the target scene name globally so the delayedcall can reference it -->
+			<!-- Gaze-locked fade: torigin=view means the black plane follows wherever the user looks -->
 			copy(global.vr_pending_scene, scene[get(newscenenameorindex)].name);
 			copy(global.vr_pending_lh, lh);
 			copy(global.vr_pending_lv, lv);
 			copy(global.vr_pending_lfov, lfov);
 			copy(global.vr_pending_flags, skin_settings.loadscene_flags);
-			stoptween(display.bgalpha);
-			tween(display.bgalpha, 1.0, 0.5, easeInSine);
-			<!-- After the fade-in completes, load the scene and bind fade-out to onloadcomplete -->
+			set(hotspot[vr_fade_black].visible, true);
+			stoptween(hotspot[vr_fade_black].alpha);
+			tween(hotspot[vr_fade_black].alpha, 1.0, 0.5, easeInSine);
 			delayedcall(vr_scene_load, 0.55,
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete,
-					stoptween(display.bgalpha);
-					tween(display.bgalpha, 0.0, 0.8, easeOutSine);
+					stoptween(hotspot[vr_fade_black].alpha);
+					tween(hotspot[vr_fade_black].alpha, 0.0, 0.8, easeOutSine);
 					delete(events[vr_fade_event]);
 				);
 				loadscene(get(global.vr_pending_scene), null, get(global.vr_pending_flags), NOBLEND);
