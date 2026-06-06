@@ -63,8 +63,9 @@
 	<!-- save the url path of this xml file (the url value will be adjusted during xml parsing) -->
 	<vtourskinxmlpath url="./" />
 
-	<!-- iPhone X safe-area support: use the horizontal safe-area only -->	
-	<display safearea="h-only" />
+	<!-- iPhone X safe-area support: use the horizontal safe-area only -->
+	<!-- bgcolor set here so tweening display.bgalpha produces a full-sphere black fade in VR -->
+	<display safearea="h-only" bgcolor="0x000000" bgalpha="0.0" />
 
 	<!-- mouse / touch / keyboard(button) control settings - https://krpano.com/docu/xml/#control -->
 	<control mouse="drag"
@@ -523,23 +524,23 @@
          handcursor="false"
          />
 
-<!-- VR close button: a small hotspot co-located with the "Stare to close" label.  -->
-<!-- Positioned below the info box (atv offset), same ath as the box.              -->
-<!-- vr_timeout fires onclick after the user gazes for 1.5 s.                      -->
+<!-- VR close button: solid red pill below the info box, triggered by a 1.5 s gaze dwell. -->
+<!-- bgalpha="1.0" makes the red background fully opaque and easy to spot.                -->
 <hotspot name="skin_info_close_vr" keep="true" type="text" distorted="true" renderer="webgl"
          ath="0" atv="0" depth="800" scale="0.6" zorder="100"
-         width="200" height="48"
-         bgcolor="0x8c2a26" bgalpha="0.0"
-         bgroundedge="8" bgborder="0"
+         width="260" height="64"
+         bgcolor="0x8c2a26" bgalpha="1.0"
+         bgroundedge="32" bgborder="0"
+         bgshadow="0 4 12 0x000000 0.5"
+         oversampling="2"
          html=""
          visible="false" alpha="0.0"
          vr_timeout="1500"
          onclick="skin_hide_info();"
          />
 
-	<!-- VR Fade to Black: uses display.bgcolor/bgalpha which fills the entire WebGL framebuffer      -->
-	<!-- (both eyes, all directions) rather than a flat hotspot plane that only covers a partial FOV -->
-	<display name="vr_fade_display" bgcolor="0x000000" bgalpha="0.0" />
+	<!-- VR Fade to Black: tweens display.bgalpha on the display element above.                      -->
+	<!-- This fills the entire WebGL framebuffer (both eyes, full 360°) rather than a flat plane.   -->
 
 	<!-- Action to show the Dialog Box -->
 	<action name="skin_show_info" scope="local" args="hs_name">
@@ -553,18 +554,17 @@
 
 		if(webvr.isenabled,
 			<!-- VR MODE: Configure the 3D Text Hotspot -->
-			<!-- The close instruction is informational only; actual closing is done by skin_info_close_vr -->
-			calc(hotspot[skin_info_box_vr].html, info_html + '[div style="margin-top:20px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; font-weight:bold; color:#8c2a26; text-align:right;"]Stare at button below to close[/div]');
+			<!-- No close instruction in the box — the red button below is self-evident -->
+			copy(hotspot[skin_info_box_vr].html, info_html);
 
 			<!-- Position the info box exactly where the user is currently looking -->
 			copy(hotspot[skin_info_box_vr].ath, view.hlookat);
 			copy(hotspot[skin_info_box_vr].atv, view.vlookat);
 
-			<!-- Position the close button below the info box (offset downward in view space) -->
-			<!-- atv offset of ~12 degrees places it just beneath the box at depth 800        -->
+			<!-- Position the close button below the info box in view-space -->
 			copy(hotspot[skin_info_close_vr].ath, view.hlookat);
 			calc(hotspot[skin_info_close_vr].atv, view.vlookat + 18);
-			set(hotspot[skin_info_close_vr].html, '[div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:14px; font-weight:bold; color:#FFFFFF; text-align:center; line-height:48px;"]✕ Close[/div]');
+			set(hotspot[skin_info_close_vr].html, '[div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:18px; font-weight:700; color:#FFFFFF; text-align:center; line-height:64px; letter-spacing:0.05em;"]✕  CLOSE[/div]');
 
 			set(hotspot[skin_info_box_vr].visible, true);
 			set(hotspot[skin_info_box_vr].scale, 0.5);
