@@ -537,39 +537,49 @@
 
 	<!-- VR Fade to Black — DOM overlay approach.                                              -->
 	<!-- A position:fixed div is injected above the krpano canvas via JavaScript.             -->
-	<!-- Being a DOM element rather than a WebGL object it covers both eyes and all           -->
-	<!-- directions on both the browser VR simulator and a real headset.                      -->
+	<!-- Uses requestAnimationFrame rather than CSS transitions for reliable behaviour        -->
+	<!-- on mobile WebKit and WebXR compositors (Oculus Go etc) where CSS transitions        -->
+	<!-- triggered immediately after opacity resets are silently dropped.                     -->
 	<action name="vr_fade_in" type="Javascript"><![CDATA[
 		var div = document.getElementById('vr_fade_overlay');
 		if (!div) {
 			div = document.createElement('div');
 			div.id = 'vr_fade_overlay';
-			div.style.cssText = [
-				'position:fixed',
-				'top:0', 'left:0',
-				'width:100vw', 'height:100vh',
-				'background:#000',
-				'opacity:0',
-				'pointer-events:none',
-				'z-index:2147483647',
-				'transition:opacity 0.5s ease-in'
-			].join(';');
+			div.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;opacity:0;pointer-events:none;z-index:2147483647;';
 			document.body.appendChild(div);
 		}
-		// Force a reflow so the transition fires from 0
-		div.style.transition = 'none';
-		div.style.opacity = '0';
-		div.offsetHeight; // reflow
-		div.style.transition = 'opacity 0.5s ease-in';
-		div.style.opacity = '1';
+		// Cancel any running animation
+		if (div._raf) { cancelAnimationFrame(div._raf); div._raf = null; }
+		var start = null;
+		var duration = 500; // ms
+		var from = parseFloat(div.style.opacity) || 0;
+		function step(ts) {
+			if (!start) start = ts;
+			var p = Math.min((ts - start) / duration, 1);
+			// easeInSine
+			div.style.opacity = from + (1 - from) * (1 - Math.cos(p * Math.PI / 2));
+			if (p < 1) { div._raf = requestAnimationFrame(step); }
+			else { div._raf = null; }
+		}
+		div._raf = requestAnimationFrame(step);
 	]]></action>
 
 	<action name="vr_fade_out" type="Javascript"><![CDATA[
 		var div = document.getElementById('vr_fade_overlay');
-		if (div) {
-			div.style.transition = 'opacity 0.8s ease-out';
-			div.style.opacity = '0';
+		if (!div) return;
+		if (div._raf) { cancelAnimationFrame(div._raf); div._raf = null; }
+		var start = null;
+		var duration = 800; // ms
+		var from = parseFloat(div.style.opacity) || 1;
+		function step(ts) {
+			if (!start) start = ts;
+			var p = Math.min((ts - start) / duration, 1);
+			// easeOutSine
+			div.style.opacity = from * (1 - Math.sin(p * Math.PI / 2));
+			if (p < 1) { div._raf = requestAnimationFrame(step); }
+			else { div._raf = null; }
 		}
+		div._raf = requestAnimationFrame(step);
 	]]></action>
 
 	<!-- Action to show the Dialog Box -->
@@ -629,13 +639,11 @@
 		if(!webvr.isenabled, vr_fade_out(); );
 	</action>
 
-	<!-- previous/next scene buttons for the hidden skin mode -->
-	<layer name="skin_btn_prev_fs" keep="true" type="container" align="lefttop"  x="-50" width="40" height="100%" bgcapture="true" alpha="0.0" enabled="false" capture="false" zorder="2" onclick="skin_nextscene_loop(-1);" onhover="tween(alpha,1.0);" onout="tween(alpha,0.25);" ondown.touch="onhover();" onup.touch="onout();">
-		<layer name="skin_btn_prev_fs_icon" style="skin_base" crop="0|64|64|64"  align="center" scale="0.5" enabled="false" />
-	</layer>
-	<layer name="skin_btn_next_fs" keep="true" type="container" align="righttop" x="-50" width="40" height="100%" bgcapture="true" alpha="0.0" enabled="false" capture="false" zorder="2" onclick="skin_nextscene_loop(+1);" onhover="tween(alpha,1.0);" onout="tween(alpha,0.25);" ondown.touch="onhover();" onup.touch="onout();">
-		<layer name="skin_btn_next_fs_icon" style="skin_base" crop="64|64|64|64" align="center" scale="0.5" enabled="false" />
-	</layer>
+	<!-- prev/next FS buttons removed: these showed left/right arrows when the control bar    -->
+	<!-- was hidden, which conflicted with hotspot-based navigation. Replaced with empty      -->
+	<!-- containers so skin_update_scene_infos references don't throw errors.                 -->
+	<layer name="skin_btn_prev_fs" keep="true" type="container" visible="false" enabled="false" />
+	<layer name="skin_btn_next_fs" keep="true" type="container" visible="false" enabled="false" />
 
 
 	<!-- gyro plugin -->
