@@ -355,17 +355,17 @@
 		
 		if(webvr.isenabled,
 			<!-- Fade using display.bgalpha - fills the entire WebGL framebuffer (both eyes, full 360°) -->
+			copy(global.vr_pending_scene, scenename);
 			stoptween(display.bgalpha);
-			tween(display.bgalpha, 1.0, 0.6, easeInSine,
-				<!-- Bind the fade-in strictly to the new scene completing its load to avoid frozen frames -->
+			tween(display.bgalpha, 1.0, 0.5, easeInSine);
+			delayedcall(vr_scene_load, 0.55,
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete,
 					stoptween(display.bgalpha);
 					tween(display.bgalpha, 0.0, 0.8, easeOutSine);
 					delete(events[vr_fade_event]);
 				);
-
-				loadscene(get(scenename), null, MERGE, NOBLEND);
+				loadscene(get(global.vr_pending_scene), null, MERGE, NOBLEND);
 			);
 		  ,
 			loadscene(get(scenename), null, MERGE, BLEND(get(transitiontime),get(transitiontweentype)));
@@ -511,6 +511,8 @@
 	</layer>
 
 <!-- Info Dialog VR Hotspot (For VR Headsets) -->
+<!-- No onclick here — gazing the text content must not close the box.         -->
+<!-- Closing is handled by the dedicated skin_info_close_vr hotspot below.     -->
 <hotspot name="skin_info_box_vr" keep="true" type="text" distorted="true" renderer="webgl"
          ath="0" atv="0" depth="800" scale="0.6" zorder="99"
          width="600" autoheight="true"
@@ -518,6 +520,20 @@
          padding="40" oversampling="2"
          html=""
          visible="false" alpha="0.0"
+         handcursor="false"
+         />
+
+<!-- VR close button: a small hotspot co-located with the "Stare to close" label.  -->
+<!-- Positioned below the info box (atv offset), same ath as the box.              -->
+<!-- vr_timeout fires onclick after the user gazes for 1.5 s.                      -->
+<hotspot name="skin_info_close_vr" keep="true" type="text" distorted="true" renderer="webgl"
+         ath="0" atv="0" depth="800" scale="0.6" zorder="100"
+         width="200" height="48"
+         bgcolor="0x8c2a26" bgalpha="0.0"
+         bgroundedge="8" bgborder="0"
+         html=""
+         visible="false" alpha="0.0"
+         vr_timeout="1500"
          onclick="skin_hide_info();"
          />
 
@@ -537,17 +553,28 @@
 
 		if(webvr.isenabled,
 			<!-- VR MODE: Configure the 3D Text Hotspot -->
-			<!-- Add a clickable close instruction for VR users since they don't have the normal X button -->
-			calc(hotspot[skin_info_box_vr].html, info_html + '[div style="margin-top:20px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; font-weight:bold; color:#8c2a26; text-align:right; cursor:pointer;"]Click to close[/div]');
-			
-			<!-- Position the 3D box exactly where the user is currently looking -->
+			<!-- The close instruction is informational only; actual closing is done by skin_info_close_vr -->
+			calc(hotspot[skin_info_box_vr].html, info_html + '[div style="margin-top:20px; font-family:Hanken Grotesk, Arial, sans-serif; font-size:16px; font-weight:bold; color:#8c2a26; text-align:right;"]Stare at button below to close[/div]');
+
+			<!-- Position the info box exactly where the user is currently looking -->
 			copy(hotspot[skin_info_box_vr].ath, view.hlookat);
 			copy(hotspot[skin_info_box_vr].atv, view.vlookat);
-			
+
+			<!-- Position the close button below the info box (offset downward in view space) -->
+			<!-- atv offset of ~12 degrees places it just beneath the box at depth 800        -->
+			copy(hotspot[skin_info_close_vr].ath, view.hlookat);
+			calc(hotspot[skin_info_close_vr].atv, view.vlookat + 18);
+			set(hotspot[skin_info_close_vr].html, '[div style="font-family:Hanken Grotesk, Arial, sans-serif; font-size:14px; font-weight:bold; color:#FFFFFF; text-align:center; line-height:48px;"]✕ Close[/div]');
+
 			set(hotspot[skin_info_box_vr].visible, true);
 			set(hotspot[skin_info_box_vr].scale, 0.5);
 			tween(hotspot[skin_info_box_vr].alpha, 1.0, 0.25);
 			tween(hotspot[skin_info_box_vr].scale, 0.6, 0.25, easeoutback);
+
+			set(hotspot[skin_info_close_vr].visible, true);
+			set(hotspot[skin_info_close_vr].scale, 0.5);
+			tween(hotspot[skin_info_close_vr].alpha, 1.0, 0.35);
+			tween(hotspot[skin_info_close_vr].scale, 0.6, 0.25, easeoutback);
 		  ,
 			<!-- NORMAL MODE: Configure the 2D Layer -->
 			copy(layer[skin_info_box].html, info_html);
@@ -562,9 +589,11 @@
 
 	<!-- Action to hide the Dialog Box -->
 	<action name="skin_hide_info">
-		<!-- Fade out both the overlay and VR hotspot -->
+		<!-- Fade out the 2D overlay -->
 		tween(layer[skin_info_overlay].alpha, 0.0, 0.25, default, set(layer[skin_info_overlay].visible, false));
+		<!-- Fade out the VR info box and its dedicated close button -->
 		tween(hotspot[skin_info_box_vr].alpha, 0.0, 0.25, default, set(hotspot[skin_info_box_vr].visible, false));
+		tween(hotspot[skin_info_close_vr].alpha, 0.0, 0.2, default, set(hotspot[skin_info_close_vr].visible, false));
 
 		<!-- Safety fallback: if they exit VR during a transition, clear the display fade -->
 		if(!webvr.isenabled,
@@ -1106,18 +1135,24 @@
 		
 		if(webvr.isenabled,
 			<!-- Fade using display.bgalpha - fills the entire WebGL framebuffer (both eyes, full 360°) -->
+			<!-- Store the target scene name globally so the delayedcall can reference it -->
+			copy(global.vr_pending_scene, scene[get(newscenenameorindex)].name);
+			copy(global.vr_pending_lh, lh);
+			copy(global.vr_pending_lv, lv);
+			copy(global.vr_pending_lfov, lfov);
+			copy(global.vr_pending_flags, skin_settings.loadscene_flags);
 			stoptween(display.bgalpha);
-			tween(display.bgalpha, 1.0, 0.6, easeInSine,
-				<!-- Strictly bind the fade-in to the new scene fully completing its load -->
+			tween(display.bgalpha, 1.0, 0.5, easeInSine);
+			<!-- After the fade-in completes, load the scene and bind fade-out to onloadcomplete -->
+			delayedcall(vr_scene_load, 0.55,
 				set(events[vr_fade_event].keep, true);
 				set(events[vr_fade_event].onloadcomplete,
 					stoptween(display.bgalpha);
 					tween(display.bgalpha, 0.0, 0.8, easeOutSine);
 					delete(events[vr_fade_event]);
 				);
-
-				loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), NOBLEND);
-				if(lh !== null, skin_lookat(get(lh), get(lv), get(lfov)); );
+				loadscene(get(global.vr_pending_scene), null, get(global.vr_pending_flags), NOBLEND);
+				if(global.vr_pending_lh !== null, skin_lookat(get(global.vr_pending_lh), get(global.vr_pending_lv), get(global.vr_pending_lfov)); );
 			);
 		  ,
 			loadscene(get(scene[get(newscenenameorindex)].name), null, get(skin_settings.loadscene_flags), get(blendmode));
